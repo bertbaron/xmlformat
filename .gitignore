@@ -24,4 +24,4 @@ _testmain.go
 *.prof
 
 # Project specific
-.project
+/.project
