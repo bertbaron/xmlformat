@@ -6,6 +6,8 @@ package main
 // All whitespace-only tokens are assumed to be 'ignorable'. It is not possible to use a schema.
 
 import (
+	"code.google.com/p/go-charset/charset"
+	_ "code.google.com/p/go-charset/data"
 	"encoding/xml"
 	"flag"
 	"fmt"
@@ -22,12 +24,11 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "\n")
 }
 
-// ignore all whitespace-only tokens
+// all whitespace-only tokens are assumed to be ignorable
 func ignorable(t xml.Token) bool {
 	switch ele := t.(type) {
 	case xml.CharData:
 		for _, b := range ele {
-			// We test bytes, this probably doesn't work for all encodings!
 			if b != 0x20 && b != 0x9 && b != 0xD && b != 0xA {
 				return false
 			}
@@ -57,6 +58,7 @@ func main() {
 		xmlReader = xmlFile
 	}
 	decoder := xml.NewDecoder(xmlReader)
+	decoder.CharsetReader = charset.NewReader
 
 	out := os.Stdout
 	if *outfile != "" {
@@ -82,13 +84,15 @@ func main() {
 			log.Fatalf("Failed to parse xml: %v", err)
 		}
 		if !ignorable(t) {
-			encoder.EncodeToken(t)
 			switch t.(type) {
+			default:
+				encoder.EncodeToken(t)
 			case xml.ProcInst:
+				procInst := xml.ProcInst{"xml", []byte("version=\"1.0\" encoding=\"UTF-8\"")}
+				encoder.EncodeToken(procInst)
 				// For some reason the encoder does not write a newline after the ProcInst <?xml...>
 				// We fix this by inserting a newline. This looks nice with go 1.5, but with 1.4
 				// it will write an escaped newline...
-				// FIXME likely doesn't work with all encodings
 				encoder.EncodeToken(xml.CharData([]byte{10}))
 			}
 		}
