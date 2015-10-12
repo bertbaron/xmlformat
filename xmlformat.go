@@ -6,11 +6,10 @@ package main
 // All whitespace-only tokens are assumed to be 'ignorable'. It is not possible to use a schema.
 
 import (
-	"code.google.com/p/go-charset/charset"
-	_ "code.google.com/p/go-charset/data"
 	"encoding/xml"
 	"flag"
 	"fmt"
+	"golang.org/x/net/html/charset"
 	"log"
 	"os"
 )
@@ -58,7 +57,7 @@ func main() {
 		xmlReader = xmlFile
 	}
 	decoder := xml.NewDecoder(xmlReader)
-	decoder.CharsetReader = charset.NewReader
+	decoder.CharsetReader = charset.NewReaderLabel
 
 	out := os.Stdout
 	if *outfile != "" {
